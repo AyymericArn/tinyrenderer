@@ -27,23 +27,20 @@ void line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor color)
     }
 }
 
+void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) {
+    line(ax, ay, bx, by, framebuffer, color);
+    line(bx, by, cx, cy, framebuffer, color);
+    line(cx, cy, ax, ay, framebuffer, color);
+}
+
 int main(int argc, char** argv) {
-    constexpr int width  = 64;
-    constexpr int height = 64;
+    constexpr int width  = 128;
+    constexpr int height = 128;
     TGAImage framebuffer(width, height, TGAImage::RGB);
 
-    int ax =  7, ay =  3;
-    int bx = 12, by = 37;
-    int cx = 62, cy = 53;
-
-    line(ax, ay, bx, by, framebuffer, blue);
-    line(cx, cy, bx, by, framebuffer, green);
-    line(cx, cy, ax, ay, framebuffer, yellow);
-    line(ax, ay, cx, cy, framebuffer, red);
-
-    framebuffer.set(ax, ay, white);
-    framebuffer.set(bx, by, white);
-    framebuffer.set(cx, cy, white);
+    triangle(  7, 45, 35, 100, 45,  60, framebuffer, red);
+    triangle(120, 35, 90,   5, 45, 110, framebuffer, white);
+    triangle(115, 83, 80,  90, 85, 120, framebuffer, green);
 
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;
