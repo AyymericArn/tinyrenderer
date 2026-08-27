@@ -28,7 +28,7 @@ void line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor color)
 }
 
 
-void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) {
+void triangleScanline(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) {
     // sort the vertices, a,b,c in ascending y order (bubblesort yay!)
     if (ay>by) { std::swap(ax, bx); std::swap(ay, by); }
     if (ay>cy) { std::swap(ax, cx); std::swap(ay, cy); }
@@ -55,14 +55,27 @@ void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuf
     }
 }
 
+void triangleBBox(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) {
+    int bbminx = std::min(std::min(ax, bx), cx); // bounding box for the triangle
+    int bbminy = std::min(std::min(ay, by), cy); // defined by its top left and bottom right corners
+    int bbmaxx = std::max(std::max(ax, bx), cx);
+    int bbmaxy = std::max(std::max(ay, by), cy);
+#pragma omp parallel for
+    for (int x=bbminx; x<=bbmaxx; x++) {
+        for (int y=bbminy; y<=bbmaxy; y++) {
+            framebuffer.set(x, y, color);
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     constexpr int width  = 128;
     constexpr int height = 128;
     TGAImage framebuffer(width, height, TGAImage::RGB);
 
-    triangle(  7, 45, 35, 100, 45,  60, framebuffer, red);
-    triangle(120, 35, 90,   5, 45, 110, framebuffer, white);
-    triangle(115, 83, 80,  90, 85, 120, framebuffer, green);
+    triangleBBox(  7, 45, 35, 100, 45,  60, framebuffer, red);
+    triangleBBox(120, 35, 90,   5, 45, 110, framebuffer, white);
+    triangleBBox(115, 83, 80,  90, 85, 120, framebuffer, green);
 
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;
