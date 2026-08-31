@@ -78,11 +78,18 @@ void triangleBBoxZ(int ax, int ay, int az, int bx, int by, int bz, int cx, int c
                 continue; // negative barycentric coordinate => the pixel is outside the triangle
             }
             unsigned char z = static_cast<unsigned char>(alpha * az + beta * bz + gamma * cz);
-            std::clog << "alpha: " << alpha << std::endl;
-            std::clog << "beta: " << beta << std::endl;
-            std::clog << "gamma: "<< gamma << std::endl;
-            std::clog << "total: "<< total_area << std::endl;
-            framebuffer.set(x, y, {z});
+            TGAColor color = {
+                static_cast<std::uint8_t>(static_cast<int>(alpha * 255.)),
+                static_cast<std::uint8_t>(static_cast<int>(beta * 255.)),
+                static_cast<std::uint8_t>(static_cast<int>(gamma * 255.)),
+                1
+            };
+            std::clog << "color: " << static_cast<int>(alpha * 255.) << std::endl;
+            // std::clog << "alpha: " << alpha << std::endl;
+            // std::clog << "beta: " << beta << std::endl;
+            // std::clog << "gamma: "<< gamma << std::endl;
+            // std::clog << "total: "<< total_area << std::endl;
+            framebuffer.set(x, y, color);
         }
     }
 }
