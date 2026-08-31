@@ -1,5 +1,6 @@
 #include <cmath>
 #include "tgaimage.h"
+#include <iostream>
 
 constexpr TGAColor white   = {255, 255, 255, 255}; // attention, BGRA order
 constexpr TGAColor green   = {  0, 255,   0, 255};
@@ -55,14 +56,31 @@ void triangleScanline(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &
     }
 }
 
+double signed_triangle_area(int ax, int ay, int bx, int by, int cx, int cy) {
+    return .5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));
+}
+
 void triangleBBox(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) {
     int bbminx = std::min(std::min(ax, bx), cx); // bounding box for the triangle
     int bbminy = std::min(std::min(ay, by), cy); // defined by its top left and bottom right corners
     int bbmaxx = std::max(std::max(ax, bx), cx);
     int bbmaxy = std::max(std::max(ay, by), cy);
+
+    double total_area = signed_triangle_area(ax, ay, bx, by, cx, cy);
+
 #pragma omp parallel for
     for (int x=bbminx; x<=bbmaxx; x++) {
         for (int y=bbminy; y<=bbmaxy; y++) {
+            double alpha = signed_triangle_area(x, y, bx, by, cx, cy);
+            double beta  = signed_triangle_area(x, y, cx, cy, ax, ay);
+            double gamma = signed_triangle_area(x, y, ax, ay, bx, by);
+            if (alpha/total_area<0 || beta/total_area<0 || gamma/total_area<0) {
+                continue; // negative barycentric coordinate => the pixel is outside the triangle
+            }
+            std::clog << "alpha: " << alpha << std::endl;
+            std::clog << "beta: " << beta << std::endl;
+            std::clog << "gamma: "<< gamma << std::endl;
+            std::clog << "total: "<< total_area << std::endl;
             framebuffer.set(x, y, color);
         }
     }
