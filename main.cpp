@@ -60,7 +60,7 @@ double signed_triangle_area(int ax, int ay, int bx, int by, int cx, int cy) {
     return .5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));
 }
 
-void triangleBBox(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) {
+void triangleBBoxZ(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer) {
     int bbminx = std::min(std::min(ax, bx), cx); // bounding box for the triangle
     int bbminy = std::min(std::min(ay, by), cy); // defined by its top left and bottom right corners
     int bbmaxx = std::max(std::max(ax, bx), cx);
@@ -71,29 +71,36 @@ void triangleBBox(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &fram
 #pragma omp parallel for
     for (int x=bbminx; x<=bbmaxx; x++) {
         for (int y=bbminy; y<=bbmaxy; y++) {
-            double alpha = signed_triangle_area(x, y, bx, by, cx, cy);
-            double beta  = signed_triangle_area(x, y, cx, cy, ax, ay);
-            double gamma = signed_triangle_area(x, y, ax, ay, bx, by);
-            if (alpha/total_area<0 || beta/total_area<0 || gamma/total_area<0) {
+            double alpha = signed_triangle_area(x, y, bx, by, cx, cy) / total_area;
+            double beta  = signed_triangle_area(x, y, cx, cy, ax, ay) / total_area;
+            double gamma = signed_triangle_area(x, y, ax, ay, bx, by) / total_area;
+            if (alpha<0 || beta<0 || gamma<0) {
                 continue; // negative barycentric coordinate => the pixel is outside the triangle
             }
+            unsigned char z = static_cast<unsigned char>(alpha * az + beta * bz + gamma * cz);
             std::clog << "alpha: " << alpha << std::endl;
             std::clog << "beta: " << beta << std::endl;
             std::clog << "gamma: "<< gamma << std::endl;
             std::clog << "total: "<< total_area << std::endl;
-            framebuffer.set(x, y, color);
+            framebuffer.set(x, y, {z});
         }
     }
 }
 
 int main(int argc, char** argv) {
-    constexpr int width  = 128;
-    constexpr int height = 128;
-    TGAImage framebuffer(width, height, TGAImage::RGB);
+    constexpr int width  = 64;
+    constexpr int height = 64;
+    TGAImage framebuffer(width, height, TGAImage::GRAYSCALE);
 
-    triangleBBox(  7, 45, 35, 100, 45,  60, framebuffer, red);
-    triangleBBox(120, 35, 90,   5, 45, 110, framebuffer, white);
-    triangleBBox(115, 83, 80,  90, 85, 120, framebuffer, green);
+    int ax = 17, ay =  4, az =  13;
+    int bx = 55, by = 39, bz = 128;
+    int cx = 23, cy = 59, cz = 255;
+
+    triangleBBoxZ(ax, ay, az, bx, by, bz, cx, cy, cz, framebuffer);
+
+    // triangleBBox(  7, 45, 35, 100, 45,  60, framebuffer, red);
+    // triangleBBox(120, 35, 90,   5, 45, 110, framebuffer, white);
+    // triangleBBox(115, 83, 80,  90, 85, 120, framebuffer, green);
 
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;
