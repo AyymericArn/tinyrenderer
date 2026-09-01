@@ -94,6 +94,7 @@ void triangleBBoxZ(int ax, int ay, int az, int bx, int by, int bz, int cx, int c
             // std::clog << "gamma: "<< gamma << std::endl;
             // std::clog << "total: "<< total_area << std::endl;
             if (z <= zbuffer.get(x, y)[0]) continue;
+            // fzbuffer[x][y] = z;
             zbuffer.set(x, y, {z});
             framebuffer.set(x, y, color);
         }
