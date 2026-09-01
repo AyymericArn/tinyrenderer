@@ -97,7 +97,7 @@ void triangleBBoxZ(int ax, int ay, int az, int bx, int by, int bz, int cx, int c
 int main(int argc, char** argv) {
     constexpr int width  = 64;
     constexpr int height = 64;
-    TGAImage framebuffer(width, height, TGAImage::GRAYSCALE);
+    TGAImage framebuffer(width, height, TGAImage::RGBA);
 
     int ax = 17, ay =  4, az =  13;
     int bx = 55, by = 39, bz = 128;
