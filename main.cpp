@@ -7,6 +7,7 @@ constexpr TGAColor green   = {  0, 255,   0, 255};
 constexpr TGAColor red     = {  0,   0, 255, 255};
 constexpr TGAColor blue    = {255, 128,  64, 255};
 constexpr TGAColor yellow  = {  0, 200, 255, 255};
+constexpr TGAColor black  = {  0, 0, 0, 0};
 
 void line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor color) {
     bool steep = std::abs(ax-bx) < std::abs(ay-by);
@@ -60,7 +61,7 @@ double signed_triangle_area(int ax, int ay, int bx, int by, int cx, int cy) {
     return .5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));
 }
 
-void triangleBBoxZ(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer) {
+void triangleBBoxZ(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, TGAImage &framebuffer, TGAColor color = white) {
     int bbminx = std::min(std::min(ax, bx), cx); // bounding box for the triangle
     int bbminy = std::min(std::min(ay, by), cy); // defined by its top left and bottom right corners
     int bbmaxx = std::max(std::max(ax, bx), cx);
@@ -78,12 +79,17 @@ void triangleBBoxZ(int ax, int ay, int az, int bx, int by, int bz, int cx, int c
                 continue; // negative barycentric coordinate => the pixel is outside the triangle
             }
             unsigned char z = static_cast<unsigned char>(alpha * az + beta * bz + gamma * cz);
-            TGAColor color = {
-                static_cast<std::uint8_t>(static_cast<int>(alpha * 255.)),
-                static_cast<std::uint8_t>(static_cast<int>(beta * 255.)),
-                static_cast<std::uint8_t>(static_cast<int>(gamma * 255.)),
-                1
-            };
+            
+            // bool isBlack = color.bgra[0] != 0 && color.bgra[1] != 0 &&  color.bgra[2] != 0;
+            bool isWhite = color.bgra[0] == 255 && color.bgra[1] == 255 &&  color.bgra[2] == 255;
+            if (isWhite) {
+                color = {
+                    static_cast<std::uint8_t>(static_cast<int>(alpha * 255.)),
+                    static_cast<std::uint8_t>(static_cast<int>(beta * 255.)),
+                    static_cast<std::uint8_t>(static_cast<int>(gamma * 255.)),
+                    1
+                };
+            }
             std::clog << "color: " << static_cast<int>(alpha * 255.) << std::endl;
             // std::clog << "alpha: " << alpha << std::endl;
             // std::clog << "beta: " << beta << std::endl;
@@ -105,6 +111,11 @@ int main(int argc, char** argv) {
 
     triangleBBoxZ(ax, ay, az, bx, by, bz, cx, cy, cz, framebuffer);
 
+    // ax = 22, ay =  8, az =  14;
+    // bx = 51, by = 39, bz = 129;
+    // cx = 27, cy = 55, cz = 256;
+
+    // triangleBBoxZ(ax, ay, az, bx, by, bz, cx, cy, cz, framebuffer, black);
     // triangleBBox(  7, 45, 35, 100, 45,  60, framebuffer, red);
     // triangleBBox(120, 35, 90,   5, 45, 110, framebuffer, white);
     // triangleBBox(115, 83, 80,  90, 85, 120, framebuffer, green);
