@@ -8,11 +8,15 @@
 constexpr int width  = 800;
 constexpr int height = 800;
 
+float fzbuffer[width][height] = {0};
+
 constexpr TGAColor white   = {255, 255, 255, 255}; // attention, BGRA order
 constexpr TGAColor green   = {  0, 255,   0, 255};
 constexpr TGAColor red     = {  0,   0, 255, 255};
 constexpr TGAColor blue    = {255, 128,  64, 255};
 constexpr TGAColor yellow  = {  0, 200, 255, 255};
+
+
 
 void line(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor color) {
     bool steep = std::abs(ax-bx) < std::abs(ay-by);
@@ -102,6 +106,17 @@ std::tuple<int,int,int> project(vec3 v) { // First of all, (x,y) is an orthogona
              (v.z + 1.) *   255./2 };
 }
 
+vec3 rot(vec3 v) {
+    constexpr double a = M_PI/6;
+    constexpr mat<3,3> Ry = {{{std::cos(a), 0, std::sin(a)}, {0,1,0}, {-std::sin(a), 0, std::cos(a)}}};
+    return Ry*v;
+}
+
+vec3 persp(vec3 v) {
+    constexpr double c = 3.;
+    return v / (1-v.z/c);
+}
+
 int main(int argc, char** argv) {
     Model model("./obj/diablo3_pose/diablo3_pose.obj");
     TGAImage framebuffer(width, height, TGAImage::RGBA);
@@ -119,9 +134,9 @@ int main(int argc, char** argv) {
 
     // draw model
     for (int i=0; i<model.nfaces(); i++) { // iterate through all triangles
-        auto [ax, ay, az] = project(model.vert(i, 0));
-        auto [bx, by, bz] = project(model.vert(i, 1));
-        auto [cx, cy, cz] = project(model.vert(i, 2));
+        auto [ax, ay, az] = project(persp(rot(model.vert(i, 0))));
+        auto [bx, by, bz] = project(persp(rot(model.vert(i, 1))));
+        auto [cx, cy, cz] = project(persp(rot(model.vert(i, 2))));
         TGAColor rnd;
         for (int c=0; c<3; c++) rnd[c] = std::rand()%255;
         triangleBBoxZ(ax, ay, az, bx, by, bz, cx, cy, cz, zbuffer, framebuffer, rnd);
